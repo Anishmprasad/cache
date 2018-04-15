@@ -28,7 +28,6 @@ class SessionResponseCache {
     }
     addSearchResponse(query, goal, exams, pageNo, data) {
         this.searchResponseTrie.addData([query, goal, exams, pageNo], data)
-        //console.log(this.searchResponseTrie)
     }
     getWikiResponse(query) {
         return this.wikiResponseTrie.get([query])
@@ -166,9 +165,7 @@ return sessionResponseCache.fetchTypeaheadSearchResponse(search_query, cid_entry
         cancelToken: source.token,
         params: {
             query: search_query,
-            // goal_code: goal,
             content_type: idx,
-            // exam_id:exam_id,
             content_code: cid,
             start: 0,
             size: 10
