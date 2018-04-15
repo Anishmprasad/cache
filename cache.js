@@ -160,17 +160,8 @@ export const fetchNextPage = (query, goal_code, content_type, content_code, exam
 
 return sessionResponseCache.fetchTypeaheadSearchResponse(search_query, cid_entry, idx_entry).then((cacheData) => {
     doOnSearchResult(dispatch, cacheData.response)
-    dispatch(set_loader_status(false));
-    dispatch(disambiguation(response.data.disambiguation.is_disambiguated))
-    console.log('search query from cache - ', search_query);
     return cacheData.response
 }).catch((err) => {
-    dispatch(searchHints([]));
-    if (parent != 'LearnResults') {
-        dispatch(set_loader_status(true));
-    }
-    dispatch(setPageNo(0));
-    console.log('search query not from cache - ', search_query);
     return horizontal_api().get(apiurl, {
         cancelToken: source.token,
         params: {
@@ -183,11 +174,6 @@ return sessionResponseCache.fetchTypeaheadSearchResponse(search_query, cid_entry
             size: 10
         }
     }).then(response => {
-        if (response.data.success) {
-            dispatch(disambiguation(response.data.disambiguation.is_disambiguated))
-        }
-        if (response.data.results || response.data.count_overall == 0 || (response.data.dym && response.data.dym.valid) || window.location.pathname === '/search')
-            dispatch(set_loader_status(false))
         if (response.data.success == true) {
             doOnSearchResult(dispatch, response)
             sessionResponseCache.addTypeaheadSearchResponse(search_query, cid_entry, idx_entry, { response })
@@ -199,29 +185,6 @@ return sessionResponseCache.fetchTypeaheadSearchResponse(search_query, cid_entry
             if (total_pages > 1) {
                 fetchNextPage(search_query, goal_id, idx, cid, -1, 10)
             }
-
-            if (response.data.disambiguation.is_disambiguated && response.data.disambiguation.autofill) {
-                //console.log('Activity Write - Search',search_query.trim());
-                try {
-                    writeActivityToElastic({
-                        user_id: getState().userInfo.resource.id,
-                        type: 'search',
-                        //url: window.location.href,
-                        //url: `/search?q=${response.data.disambiguation.autofill.trim().replace(' ','+')}`,
-                        url: `/search?q=${response.data.disambiguation.autofill.trim()}&content_code=${response.data.disambiguation.top_result.code}&content_type=${response.data.disambiguation.top_result.index}`,
-                        name: response.data.disambiguation.autofill.trim(),
-                        content_code: response.data.disambiguation.top_result.code,
-                        content_type: response.data.disambiguation.top_result.index,
-                    });
-                } catch (error) {
-                    console.log('Activity Search Write - Error', error);
-                }
-            }
-
-            //                 dispatch(searchKey(search_query))
-        } else {
-            //               dispatch(searchKey(search_query))
-            //               dispatch(searchHints(Arrayhints))
         }
         return response
     }).catch(function (error) {
