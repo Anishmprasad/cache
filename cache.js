@@ -1,4 +1,3 @@
-import { api } from './api'
 
 class SessionResponseCache {
     constructor() {
@@ -154,38 +153,21 @@ export const fetchNextPage = (query, goal_code, content_type, content_code, exam
 
 
 
+// caching usage
 
 
-
-return sessionResponseCache.fetchTypeaheadSearchResponse(search_query, cid_entry, idx_entry).then((cacheData) => {
+sessionResponseCache.fetchTypeaheadSearchResponse(search_query, cid_entry, idx_entry)
+.then((cacheData) => {
     doOnSearchResult(dispatch, cacheData.response)
     return cacheData.response
-}).catch((err) => {
-    return horizontal_api().get(apiurl, {
-        cancelToken: source.token,
-        params: {
-            query: search_query,
-            content_type: idx,
-            content_code: cid,
-            start: 0,
-            size: 10
-        }
-    }).then(response => {
-        if (response.data.success == true) {
-            doOnSearchResult(dispatch, response)
-            sessionResponseCache.addTypeaheadSearchResponse(search_query, cid_entry, idx_entry, { response })
-            if (response.data.valid_goals && response.data.valid_goals.length == 1) {
-                goal_id = response.data.valid_goals[0]
-            }
-            sessionResponseCache.addSearchResponse(search_query, goal_id, -1, 1, { response })
-            var total_pages = Math.ceil((response.data.count_all_widgets || 0) / 10);
-            if (total_pages > 1) {
-                fetchNextPage(search_query, goal_id, idx, cid, -1, 10)
-            }
-        }
+})
+.catch((err) => {
+    return axios.get(apiurl)
+    .then(response => {
+        sessionResponseCache.addTypeaheadSearchResponse(search_query, cid_entry, idx_entry, { response })
+        sessionResponseCache.addSearchResponse(search_query, goal_id, -1, 1, { response })
         return response
     }).catch(function (error) {
-        console.log(error);
         return error
     });
 })
